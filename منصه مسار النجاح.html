@@ -1,0 +1,191 @@
+منصه مسار النجاح
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة مسار النجاح</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+body { margin:0; background:#f4f4f4; min-height:100vh; display:flex; flex-direction:column; }
+header { background-color:#004d40; color:white; padding:1rem; text-align:center; font-size:1.8rem; font-weight:bold; }
+main { flex:1; display:flex; justify-content:center; align-items:flex-start; padding-top:1rem; }
+.card { background:white; padding:2rem; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:90%; max-width:400px; }
+.card h2 { text-align:center; margin-bottom:1rem; color:#004d40; }
+.input-group { margin-bottom:1rem; }
+.input-group label { display:block; margin-bottom:0.5rem; color:#004d40; }
+.input-group input, .input-group select { width:100%; padding:0.6rem; border:1px solid #ccc; border-radius:8px; }
+.btn { width:100%; padding:0.7rem; background-color:#004d40; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; transition:background 0.3s; }
+.btn:hover { background-color:#00695c; }
+.toggle { text-align:center; margin-top:1rem; cursor:pointer; color:#004d40; }
+.dashboard { display:none; width:100%; flex-direction:column; }
+.dashboard.active { display:flex; }
+.topbar { width:100%; background-color:#004d40; color:white; display:flex; justify-content:space-around; padding:0.5rem 0; flex-wrap:wrap; }
+.topbar li { list-style:none; cursor:pointer; padding:0.5rem 1rem; transition:background 0.3s; }
+.topbar li:hover { background-color:#00695c; }
+.content { padding:2rem; min-height:50vh; background:white; width:100%; margin-top:1rem; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); }
+table { width:100%; border-collapse:collapse; margin-top:1rem; }
+table, th, td { border:1px solid #ccc; }
+th, td { padding:0.5rem; text-align:center; }
+.footer-space { height:50px; background:white; }
+@media (max-width:768px) { .topbar { flex-direction:column; align-items:center; } .topbar li { width:90%; text-align:center; margin:0.2rem 0; } main { padding:1rem; } .content { padding:1rem; } }
+@media (max-width:480px) { header { font-size:1.5rem; } .card { padding:1.5rem; } .btn { padding:0.6rem; } }
+</style>
+</head>
+<body>
+<header>منصة مسار النجاح</header>
+<main>
+<div class="card" id="authCard">
+<h2 id="authTitle">تسجيل الدخول</h2>
+<div class="input-group">
+<label for="role">اختر الفئة</label>
+<select id="role">
+<option value="student">طالب</option>
+<option value="teacher">معلم</option>
+<option value="parent">ولي أمر</option>
+</select>
+</div>
+<div class="input-group">
+<label for="username">اسم المستخدم</label>
+<input type="text" id="username">
+</div>
+<div class="input-group">
+<label for="password">كلمة المرور</label>
+<input type="password" id="password">
+</div>
+<div id="extraFields" style="display:none;">
+<div class="input-group">
+<label for="fullname">الاسم الكامل</label>
+<input type="text" id="fullname">
+</div>
+<div class="input-group">
+<label for="email">البريد الإلكتروني</label>
+<input type="email" id="email">
+</div>
+<div class="input-group">
+<label for="phone">رقم الهاتف</label>
+<input type="text" id="phone">
+</div>
+</div>
+<button class="btn" id="authBtn">تسجيل الدخول</button>
+<div class="toggle" id="toggleAuth">ليس لديك حساب؟ إنشاء حساب</div>
+</div>
+
+<div class="dashboard" id="dashboard">
+<ul class="topbar" id="menu"></ul>
+<div class="content" id="content">
+<h2>مرحبًا بك!</h2>
+<div id="dynamicContent"></div>
+</div>
+</div>
+</main>
+<div class="footer-space"></div>
+
+<script>
+// تحميل الحسابات والواجبات من localStorage
+let accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+
+const authCard = document.getElementById('authCard');
+const dashboard = document.getElementById('dashboard');
+const authBtn = document.getElementById('authBtn');
+const toggleAuth = document.getElementById('toggleAuth');
+const authTitle = document.getElementById('authTitle');
+const menu = document.getElementById('menu');
+const content = document.getElementById('dynamicContent');
+const extraFields = document.getElementById('extraFields');
+
+let isLogin = true;
+
+toggleAuth.addEventListener('click', () => {
+    isLogin = !isLogin;
+    authTitle.textContent = isLogin ? 'تسجيل الدخول' : 'إنشاء حساب';
+    authBtn.textContent = isLogin ? 'تسجيل الدخول' : 'إنشاء حساب';
+    toggleAuth.textContent = isLogin ? 'ليس لديك حساب؟ إنشاء حساب' : 'لديك حساب؟ تسجيل الدخول';
+    extraFields.style.display = isLogin ? 'none' : 'block';
+});
+
+authBtn.addEventListener('click', () => {
+    const role = document.getElementById('role').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!username || !password) { alert('الرجاء ملء جميع الحقول'); return; }
+
+    if (isLogin) {
+        const user = accounts.find(acc => acc.username === username && acc.password === password && acc.role === role);
+        if (user) {
+            authCard.style.display = 'none';
+            dashboard.style.display = 'flex';
+            dashboard.classList.add('active');
+            loadDashboard(user);
+        } else {
+            alert('اسم المستخدم أو كلمة المرور خاطئة! يجب إنشاء حساب أولاً.');
+        }
+    } else {
+        const fullname = document.getElementById('fullname').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+
+        if(!fullname || !email || !phone) { alert('الرجاء ملء جميع الحقول الجديدة'); return; }
+
+        const exists = accounts.find(acc => acc.username === username && acc.role === role);
+        if (exists) { alert('هذا الحساب موجود بالفعل. اختر اسم مستخدم آخر.'); return; }
+
+        accounts.push({ username, password, role, fullname, email, phone });
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+        alert('تم إنشاء الحساب بنجاح! الآن يمكنك تسجيل الدخول.');
+        isLogin = true;
+        authTitle.textContent = 'تسجيل الدخول';
+        authBtn.textContent = 'تسجيل الدخول';
+        toggleAuth.textContent = 'ليس لديك حساب؟ إنشاء حساب';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('fullname').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phone').value = '';
+        extraFields.style.display = 'none';
+    }
+});
+
+// تحميل لوحة التحكم
+function loadDashboard(user) {
+    menu.innerHTML = '';
+    content.innerHTML = '';
+    const role = user.role;
+
+    if (role === 'student') {
+        menu.innerHTML = `
+            <li onclick="showSection('home', '${user.username}')">الصفحة الرئيسية</li>
+            <li onclick="showSection('assignments', '${user.username}')">الواجبات</li>
+            <li onclick="showSection('tests', '${user.username}')">الاختبارات</li>
+            <li onclick="logout()">تسجيل خروج</li>
+        `;
+    } else if (role === 'teacher') {
+        menu.innerHTML = `
+            <li onclick="showSection('home', '${user.username}')">الصفحة الرئيسية</li>
+            <li onclick="showSection('addAssignment', '${user.username}')">إضافة واجب</li>
+            <li onclick="showSection('addTest', '${user.username}')">إضافة اختبار</li>
+            <li onclick="showSection('addLesson', '${user.username}')">إضافة درس</li>
+            <li onclick="logout()">تسجيل خروج</li>
+        `;
+    } else if (role === 'parent') {
+        menu.innerHTML = `
+            <li onclick="showSection('home', '${user.username}')">الصفحة الرئيسية</li>
+            <li onclick="showSection('studentActivity')">نشاط الطالب</li>
+            <li onclick="logout()">تسجيل خروج</li>
+        `;
+    }
+
+    showSection('home', user.username);
+}
+
+// عرض الأقسام
+function showSection(section, username = '') {
+    let user = accounts.find(acc => acc.username === username) || accounts[0];
+
+    switch(section) {
+        case 'home':
+            content.innerHTML = `<h3>مرحبًا بك في منصة مسار النجاح!</h3>
+            <p><strong>الاسم:</strong
